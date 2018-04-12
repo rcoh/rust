@@ -8,11 +8,14 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
+// must-compile-successfully
+
 const X: u32 = 5;
 const Y: u32 = 6;
 const FOO: u32 = [X - Y, Y - X][(X < Y) as usize];
 //~^ WARN attempt to subtract with overflow
 
 fn main() {
-    println!("{}", FOO); //~ E0080
+    println!("{}", FOO);
+    //~^ WARN constant evaluation error
 }
