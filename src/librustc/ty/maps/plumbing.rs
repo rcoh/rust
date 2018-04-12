@@ -522,6 +522,7 @@ macro_rules! define_maps {
                         let icx = ty::tls::ImplicitCtxt {
                             tcx,
                             query: Some(job.clone()),
+                            task: icx.task,
                         };
 
                         // Use the ImplicitCtxt while we execute the query

@@ -1563,6 +1563,7 @@ impl<'gcx: 'tcx, 'tcx> GlobalCtxt<'gcx> {
             let new_icx = ty::tls::ImplicitCtxt {
                 tcx,
                 query: icx.query.clone(),
+                task: icx.task,
             };
             ty::tls::enter_context(&new_icx, |new_icx| {
                 f(new_icx.tcx)
@@ -1741,7 +1742,8 @@ pub mod tls {
     use ty::maps;
     use errors::{Diagnostic, TRACK_DIAGNOSTICS};
     use rustc_data_structures::OnDrop;
-    use rustc_data_structures::sync::Lrc;
+    use rustc_data_structures::sync::{Lrc, Lock};
+    use dep_graph::OpenTask;
 
     /// This is the implicit state of rustc. It contains the current
     /// TyCtxt and query. It is updated when creating a local interner or
@@ -1757,6 +1759,10 @@ pub mod tls {
         /// The current query job, if any. This is updated by start_job in
         /// ty::maps::plumbing when executing a query
         pub query: Option<Lrc<maps::QueryJob<'gcx>>>,
+
+        /// The current dep graph task. This is used to add dependencies to queries
+        /// when executing them
+        pub task: &'a Lock<OpenTask>,
     }
 
     // A thread local value which stores a pointer to the current ImplicitCtxt
@@ -1842,6 +1848,7 @@ pub mod tls {
             let icx = ImplicitCtxt {
                 tcx,
                 query: None,
+                task: &Lock::new(OpenTask::Ignore),
             };
             enter_context(&icx, |_| {
                 f(tcx)
